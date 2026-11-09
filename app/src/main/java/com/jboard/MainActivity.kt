@@ -58,9 +58,15 @@ fun JboardApp() {
  var draft by remember { mutableStateOf("") }
  var showHistory by remember { mutableStateOf(false) }
  var boardName by remember { mutableStateOf("My ideas") }
- var attachment by remember { mutableStateOf("") }
+ var attachment by remember { mutableStateOf(prefs.getString("last_attachment","") ?: "") }
  val pickFile= rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-   if(uri!=null){ attachment=uri.toString(); history.add("Attached file: ${uri.lastPathSegment ?: "file"}"); saveBoard(prefs,notes,threads,history,boardName) }
+   if(uri!=null){
+     try { ctx.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch(_:Exception) {}
+     attachment=uri.toString()
+     prefs.edit().putString("last_attachment",attachment).apply()
+     history.add("Attached file: ${uri.lastPathSegment ?: "file"}")
+     saveBoard(prefs,notes,threads,history,boardName)
+   }
  }
  LaunchedEffect(Unit) {
    try {
