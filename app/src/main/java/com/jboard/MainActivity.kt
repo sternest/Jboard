@@ -39,7 +39,7 @@ private val Pink = Color(0xFFFF7EB6)
 private val Paper = Color(0xFFFFF6D9)
 private val Cream = Color(0xFFFFFDF5)
 
-data class Note(var id:Int, var text:String, var x:Float, var y:Float, var color:Int)
+data class Note(var id:Int, var text:String, var x:Float, var y:Float, var color:Long)
 data class Thread(val a:Int,val b:Int)
 
 class MainActivity : ComponentActivity() {
@@ -74,7 +74,7 @@ fun JboardApp() {
     val root=JSONObject(prefs.getString("board","{}")!!)
     boardName=root.optString("name","My ideas")
     val ns=root.optJSONArray("notes") ?: JSONArray()
-    for(i in 0 until ns.length()){val n=ns.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.getDouble("x").toFloat(),n.getDouble("y").toFloat(),n.optInt("color",0)))}
+    for(i in 0 until ns.length()){val n=ns.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.getDouble("x").toFloat(),n.getDouble("y").toFloat(),n.optLong("color",0L)))}
     nextId=(notes.maxOfOrNull{it.id} ?: 0)+1
     val ts=root.optJSONArray("threads") ?: JSONArray()
     for(i in 0 until ts.length()){val t=ts.getJSONObject(i);threads.add(Thread(t.getInt("a"),t.getInt("b")))}
