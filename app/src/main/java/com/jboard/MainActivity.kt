@@ -97,7 +97,7 @@ fun JboardApp() {
       while(yy<size.height){var xx=step;while(xx<size.width){drawCircle(Color(0xFF34302A),1.2f,Offset(xx,yy));xx+=step};yy+=step}
       threads.forEach { t ->
        val a=notes.find{it.id==t.a};val b=notes.find{it.id==t.b}
-       if(a!=null&&b!=null) { val start=Offset(a.x.dp.toPx()+75.dp.toPx(),a.y.dp.toPx()+55.dp.toPx());val end=Offset(b.x.dp.toPx()+75.dp.toPx(),b.y.dp.toPx()+55.dp.toPx()); val path=Path().apply{moveTo(start.x,start.y);cubicTo(start.x+45,start.y-45,end.x-45,end.y+45,end.x,end.y)};drawPath(path,Color(0xFFE84A58),style=androidx.compose.ui.graphics.drawscope.Stroke(width=3.dp.toPx())) }
+       if(a!=null&&b!=null) { val start=Offset(a.x+75.dp.toPx(),a.y+55.dp.toPx());val end=Offset(b.x+75.dp.toPx(),b.y+55.dp.toPx()); val path=Path().apply{moveTo(start.x,start.y);cubicTo(start.x+45,start.y-45,end.x-45,end.y+45,end.x,end.y)};drawPath(path,Color(0xFFE84A58),style=androidx.compose.ui.graphics.drawscope.Stroke(width=3.dp.toPx())) }
       }
      }
      notes.forEach { n ->
@@ -107,7 +107,7 @@ fun JboardApp() {
       }
      }
      Text("J",Modifier.align(Alignment.BottomEnd).padding(14.dp),color=Gold.copy(alpha=.18f),fontWeight=FontWeight.Black,style=MaterialTheme.typography.displayLarge)
-     Text("❧",Modifier.align(Alignment.BottomStart).padding(14.dp),color=Pink.copy(alpha=.22f),style=MaterialTheme.typography.headlineLarge)
+     Text("🦋",Modifier.align(Alignment.BottomStart).padding(14.dp),color=Pink.copy(alpha=.30f),style=MaterialTheme.typography.headlineLarge)
     }
     Row(Modifier.fillMaxWidth().padding(vertical=9.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){
      OutlinedButton(onClick={if(selected>=0){val other=notes.firstOrNull{it.id!=selected};if(other!=null){threads.add(Thread(selected,other.id));history.add("Connected note #${selected} → #${other.id}");persist()}}},modifier=Modifier.weight(1f)){Text("CONNECT TO NEXT",color=Pink)}
