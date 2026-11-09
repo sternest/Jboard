@@ -39,7 +39,7 @@ private val Pink = Color(0xFFFF7EB6)
 private val Paper = Color(0xFFFFF6D9)
 private val Cream = Color(0xFFFFFDF5)
 
-data class Note(var id:Int, var text:String, var x:Float, var y:Float, var color:Long)
+class Note(var id:Int, var text:String, x:Float, y:Float, var color:Long) { var x by mutableFloatStateOf(x); var y by mutableFloatStateOf(y) }
 data class Thread(val a:Int,val b:Int)
 
 class MainActivity : ComponentActivity() {
