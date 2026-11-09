@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -20,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.clickable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -108,7 +108,7 @@ fun JboardApp() {
       }
      }
      notes.forEach { n ->
-      Column(Modifier.offset { IntOffset(n.x.roundToInt(),n.y.roundToInt()) }.width(150.dp).background(Color(n.color),RoundedCornerShape(8.dp)).border(if(selected==n.id) 2.dp else 0.dp,Gold,RoundedCornerShape(8.dp)).pointerInput(n.id){detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();n.x=(n.x+drag.x).coerceIn(0f,500f);n.y=(n.y+drag.y).coerceIn(0f,900f)},onDragEnd={history.add("Moved note #${n.id}");persist()}) ) {
+      Column(Modifier.offset { IntOffset(n.x.roundToInt(),n.y.roundToInt()) }.width(150.dp).background(Color(n.color),RoundedCornerShape(8.dp)).border(if(selected==n.id) 2.dp else 0.dp,Gold,RoundedCornerShape(8.dp)).pointerInput(n.id){detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();n.x=(n.x+drag.x).coerceIn(0f,500f);n.y=(n.y+drag.y).coerceIn(0f,900f)},onDragEnd={history.add("Moved note #${n.id}");persist()})}) {
        Row(Modifier.fillMaxWidth().padding(start=9.dp,end=4.dp,top=5.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),style=MaterialTheme.typography.labelSmall);Spacer(Modifier.weight(1f));TextButton(onClick={selected=n.id;editing=n.id;draft=n.text},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.remove(n);threads.removeAll{it.a==n.id||it.b==n.id};history.add("Deleted note #${n.id}");persist()},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
        Text(n.text.ifBlank{"Tap ✎ to write"},Modifier.padding(horizontal=10.dp,vertical=8.dp),color=Ink,fontWeight=FontWeight.Medium,maxLines=6)
       }
