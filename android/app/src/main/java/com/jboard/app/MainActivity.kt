@@ -132,7 +132,7 @@ private fun JboardApp() {
                                     Checkbox(checked=note.id in selected,onCheckedChange={checked->selected=if(checked) selected+note.id else selected-note.id},
                                         colors=CheckboxDefaults.colors(checkedColor=ThreadRed,uncheckedColor=Ink))
                                     Spacer(Modifier.weight(1f))
-                                    Text("✎",color=Ink)
+                                    Text("✎",color=Ink,modifier=Modifier.clickable { editId=note.id; editText=note.text })
                                     TextButton(onClick={notes=notes.filterNot{it.id==note.id};selected=selected-note.id;saved=false;history="Deleted note"}) { Text("×",color=Ink) }
                                 }
                                 Text(note.text,color=Ink,fontWeight=FontWeight.Medium,fontSize=13.sp)
