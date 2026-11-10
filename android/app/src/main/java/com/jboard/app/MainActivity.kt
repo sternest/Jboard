@@ -104,15 +104,6 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  androidx.compose.foundation.Canvas(Modifier.fillMaxSize().offset{IntOffset(boardPanX,boardPanY)}.pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true;save()};activeStroke=null},onDragCancel={activeStroke=null})}.pointerInput(drawMode){if(!drawMode)detectDragGestures(onDrag={change,drag->change.consume();boardPanX=boardPanX+drag.x.roundToInt();boardPanY=boardPanY+drag.y.roundToInt()})}){
  val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
  drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
- // Large, low-contrast Jboard watermark, painted behind all board content and user threads.
- val watermarkPaint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply{
-  color=android.graphics.Color.argb(15,255,214,41)
-  textSize=size.width*0.62f
-  typeface=android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.BOLD)
-  textAlign=android.graphics.Paint.Align.CENTER
- }
- val watermarkMetrics=watermarkPaint.fontMetrics
- drawContext.canvas.nativeCanvas.drawText("JBOARD",size.width/2f,size.height/2f-(watermarkMetrics.ascent+watermarkMetrics.descent)/2f,watermarkPaint)
  val visible=notes.filter{it.text.contains(search,ignoreCase=true)}
  strokes.forEach{stroke->if(stroke.size>1){val path=Path().apply{moveTo(stroke.first().x+boardPanX,stroke.first().y+boardPanY);stroke.drop(1).forEach{lineTo(it.x+boardPanX,it.y+boardPanY)}};drawPath(path,NeonPink,style=Stroke(width=3.dp.toPx()))}}
  activeStroke?.let{stroke->if(stroke.size>1){val path=Path().apply{moveTo(stroke.first().x*size.width,stroke.first().y*size.height);stroke.drop(1).forEach{lineTo(it.x*size.width,it.y*size.height)}};drawPath(path,Pink,style=Stroke(width=3.dp.toPx()))}}
