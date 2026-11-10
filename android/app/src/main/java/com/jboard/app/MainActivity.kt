@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +32,7 @@ private val Board=Color(0xFF1B1B1B)
 private val Gold=Color(0xFFFFD629)
 private val Pink=Color(0xFFFF78B7)
 private val Cream=Color(0xFFFFF4D8)
+private val NeonPink=Color(0xFFFF168B)
 private data class Note(val id:Int,val text:String,val x:Int,val y:Int,val color:Long)
 
 class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{JboardApp()}}}
@@ -61,16 +64,26 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  OutlinedTextField(value=search,onValueChange={search=it},modifier=Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("Search your board…")},leadingIcon={Text("⌕",color=Gold)},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=Cream,unfocusedTextColor=Cream,focusedBorderColor=Gold,unfocusedBorderColor=Color.DarkGray))
  OutlinedTextField(value=boardName,onValueChange={boardName=it;dirty=true},label={Text("Board name")},singleLine=true,modifier=Modifier.fillMaxWidth(),colors=OutlinedTextFieldDefaults.colors(focusedTextColor=Cream,unfocusedTextColor=Cream,focusedBorderColor=Gold,unfocusedBorderColor=Color.DarkGray,focusedLabelColor=Gold,unfocusedLabelColor=Color.LightGray))
  Row(verticalAlignment=Alignment.CenterVertically){Text("IDEA BOARD",color=Gold,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Spacer(Modifier.weight(1f));Text("${notes.count{it.text.contains(search,ignoreCase=true)}} MATCHING NOTES",color=Color.LightGray,fontSize=10.sp)}
- BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF171414))){
+ BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF281A12)).padding(2.dp).background(Color(0xFF090707),RoundedCornerShape(21.dp))){
  val maxX=maxWidth.value.toInt();val maxY=maxHeight.value.toInt()
- androidx.compose.foundation.Canvas(Modifier.fillMaxSize()){val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF35312B),1f,androidx.compose.ui.geometry.Offset(x,y));x+=step};y+=step}}
+ androidx.compose.foundation.Canvas(Modifier.fillMaxSize()){
+ val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
+ drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
+ val visible=notes.filter{it.text.contains(search,ignoreCase=true)}
+ visible.zipWithNext().forEach{(a,b)->
+   val start=Offset(a.x.dp.toPx()+70.dp.toPx(),a.y.dp.toPx()+40.dp.toPx())
+   val end=Offset(b.x.dp.toPx()+70.dp.toPx(),b.y.dp.toPx()+40.dp.toPx())
+   drawLine(NeonPink.copy(alpha=.85f),start,end,strokeWidth=1.8.dp.toPx())
+   drawCircle(Pink,radius=3.dp.toPx(),center=start);drawCircle(Pink,radius=3.dp.toPx(),center=end)
+ }
+}
  if(notes.isEmpty()) Text("YOUR BOARD STARTS HERE\n\nTap + to create your first note",Modifier.align(Alignment.Center),color=Color.LightGray,fontSize=15.sp,textAlign=androidx.compose.ui.text.style.TextAlign.Center) 
- notes.filter{it.text.contains(search,ignoreCase=true)}.forEach{n->Column(Modifier.offset{IntOffset(n.x,n.y)}.width(140.dp).clip(RoundedCornerShape(12.dp)).background(Color(n.color)).pointerInput(n.id){detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();val dx=(drag.x/this.size.width.coerceAtLeast(1)*maxX).roundToInt();val dy=(drag.y/this.size.height.coerceAtLeast(1)*maxY).roundToInt();notes.replaceAll{q->if(q.id==n.id)q.copy(x=(q.x+dx).coerceIn(0,(maxX-145).coerceAtLeast(0)),y=(q.y+dy).coerceIn(0,(maxY-100).coerceAtLeast(0)))else q};dirty=true})}){
+ notes.filter{it.text.contains(search,ignoreCase=true)}.forEach{n->Column(Modifier.offset{IntOffset(n.x,n.y)}.width(140.dp).clip(RoundedCornerShape(12.dp)).background(Color(n.color)).pointerInput(n.id){detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();val dx=drag.x.roundToInt();val dy=drag.y.roundToInt();notes.replaceAll{q->if(q.id==n.id)q.copy(x=(q.x+dx).coerceIn(0,(maxX-145).coerceAtLeast(0)),y=(q.y+dy).coerceIn(0,(maxY-100).coerceAtLeast(0)))else q};dirty=true})}){
  Row(Modifier.fillMaxWidth().padding(start=8.dp,end=3.dp,top=4.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),fontSize=9.sp);Spacer(Modifier.weight(1f));TextButton(onClick={editing=n.id;draft=n.text;selected=n.id},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.removeAll{it.id==n.id};history.add("Deleted note");dirty=true},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
  Text(n.text,Modifier.padding(9.dp),color=Ink,fontSize=13.sp,maxLines=7)
  }}
  Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.12f),fontSize=96.sp,fontWeight=FontWeight.Black)
- Text("🦋",Modifier.align(Alignment.BottomStart).padding(18.dp),color=Pink.copy(alpha=.65f),fontSize=34.sp)
+ Text("🦋",Modifier.align(Alignment.CenterEnd).padding(end=8.dp),color=Pink.copy(alpha=.18f),fontSize=150.sp)
  }
  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
