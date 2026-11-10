@@ -1,6 +1,11 @@
 package com.jboard.app
 
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -59,9 +64,11 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  val strokes=remember{mutableStateListOf<MutableList<Offset>>()}
  var activeStroke by remember{mutableStateOf<List<Offset>?>(null)}
  var section by remember{mutableStateOf("Home")}
+ val attachments=remember{mutableStateListOf<String>()}
+ val filePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri:Uri?->uri?.let{u->try{context.contentResolver.takePersistableUriPermission(u,android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);val name=context.contentResolver.query(u,null,null,null,null)?.use{c->if(c.moveToFirst())c.getString(c.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)) else "Attachment"}?:"Attachment";attachments.add(name+"|"+u.toString());prefs.edit().putString("attachments",JSONArray().apply{attachments.forEach{put(it)}}.toString()).apply();recordActivity("Added file: $name")}catch(_:Exception){}}}
  val history=remember{mutableStateListOf<String>()}
  fun recordActivity(message:String){history.add(message);while(history.size>100)history.removeAt(0);prefs.edit().putString("history",JSONArray().apply{history.forEach{put(it)}}.toString()).apply()}
- LaunchedEffect(Unit){try{val arr=JSONArray(prefs.getString("notes","[]"));for(i in 0 until arr.length()){val n=arr.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.optInt("x",20),n.optInt("y",20),n.optLong("color",0xFFFFE27A)))};nextId=(notes.maxOfOrNull{it.id}?:0)+1}catch(_:Exception){};try{val h=JSONArray(prefs.getString("history","[]"));for(i in 0 until h.length())history.add(h.getString(i))}catch(_:Exception){};try{val saved=JSONArray(prefs.getString("strokes","[]"));for(i in 0 until saved.length()){val arr=saved.getJSONArray(i);val stroke=mutableListOf<Offset>();for(j in 0 until arr.length()){val p=arr.getJSONObject(j);stroke.add(Offset(p.getDouble("x").toFloat(),p.getDouble("y").toFloat()))};if(stroke.isNotEmpty())strokes.add(stroke)}}catch(_:Exception){}}
+ LaunchedEffect(Unit){try{val arr=JSONArray(prefs.getString("notes","[]"));for(i in 0 until arr.length()){val n=arr.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.optInt("x",20),n.optInt("y",20),n.optLong("color",0xFFFFE27A)))};nextId=(notes.maxOfOrNull{it.id}?:0)+1}catch(_:Exception){};try{val h=JSONArray(prefs.getString("history","[]"));for(i in 0 until h.length())history.add(h.getString(i))}catch(_:Exception){};try{val f=JSONArray(prefs.getString("attachments","[]"));for(i in 0 until f.length())attachments.add(f.getString(i))}catch(_:Exception){};try{val saved=JSONArray(prefs.getString("strokes","[]"));for(i in 0 until saved.length()){val arr=saved.getJSONArray(i);val stroke=mutableListOf<Offset>();for(j in 0 until arr.length()){val p=arr.getJSONObject(j);stroke.add(Offset(p.getDouble("x").toFloat(),p.getDouble("y").toFloat()))};if(stroke.isNotEmpty())strokes.add(stroke)}}catch(_:Exception){}}
  fun save(){val a=JSONArray();notes.forEach{a.put(JSONObject().put("id",it.id).put("text",it.text).put("x",it.x).put("y",it.y).put("color",it.color))};prefs.edit().putString("name",boardName).putString("notes",a.toString()).putString("strokes",JSONArray().apply{strokes.forEach{stroke->put(JSONArray().apply{stroke.forEach{put(JSONObject().put("x",it.x).put("y",it.y))}})}}.toString()).apply();recordActivity("Saved board");dirty=false}
  MaterialTheme(colorScheme=darkColorScheme(primary=Gold,background=Ink,surface=Board,onBackground=Cream,onSurface=Cream)){
  Scaffold(containerColor=Ink,topBar={Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically){
@@ -100,6 +107,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.12f),fontSize=96.sp,fontWeight=FontWeight.Black)
  Text("🦋",Modifier.align(Alignment.CenterEnd).padding(end=8.dp),color=Pink.copy(alpha=.18f),fontSize=150.sp)
  }
+ if(section=="Files"){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={filePicker.launch(arrayOf("*/*"))},colors=ButtonDefaults.buttonColors(containerColor=Gold,contentColor=Ink)){Text("＋ UPLOAD FILE")};Text("${attachments.size} attachments",color=Cream,modifier=Modifier.align(Alignment.CenterVertically))};attachments.forEach{item->Row(Modifier.fillMaxWidth().padding(vertical=4.dp),verticalAlignment=Alignment.CenterVertically){Text(item.substringBefore("|"),color=Cream,modifier=Modifier.weight(1f));TextButton(onClick={attachments.remove(item);prefs.edit().putString("attachments",JSONArray().apply{attachments.forEach{put(it)}}.toString()).apply()}){Text("REMOVE",color=Pink)}}}}
  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={drawMode=!drawMode;activeStroke=null},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=if(drawMode)Gold else Pink)){Text(if(drawMode)"DRAW THREAD: ON" else "✎ THREAD")};OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
  }}
