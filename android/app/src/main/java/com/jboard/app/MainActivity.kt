@@ -10,6 +10,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -111,7 +112,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Text("🦋",Modifier.align(Alignment.CenterEnd).padding(end=8.dp),color=Pink.copy(alpha=.18f),fontSize=150.sp)
  }
   }
- if(section=="Files"){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={filePicker.launch(arrayOf("*/*"))},colors=ButtonDefaults.buttonColors(containerColor=Gold,contentColor=Ink)){Text("＋ UPLOAD FILE")};Text("${attachments.size} attachments",color=Cream,modifier=Modifier.align(Alignment.CenterVertically))};attachments.forEach{item->Row(Modifier.fillMaxWidth().padding(vertical=4.dp),verticalAlignment=Alignment.CenterVertically){Text(item.substringBefore("|"),color=Cream,modifier=Modifier.weight(1f));TextButton(onClick={attachments.remove(item);prefs.edit().putString("attachments",JSONArray().apply{attachments.forEach{put(it)}}.toString()).apply()}){Text("REMOVE",color=Pink)}}}}
+ if(section=="Files"){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={filePicker.launch(arrayOf("*/*"))},colors=ButtonDefaults.buttonColors(containerColor=Gold,contentColor=Ink)){Text("＋ UPLOAD FILE")};Text("${attachments.size} attachments",color=Cream,modifier=Modifier.align(Alignment.CenterVertically))};attachments.forEach{item->Row(Modifier.fillMaxWidth().padding(vertical=4.dp),verticalAlignment=Alignment.CenterVertically){Text(item.substringBefore("|"),color=Cream,modifier=Modifier.weight(1f).clickable{try{val uri=Uri.parse(item.substringAfter("|"));context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(uri,context.contentResolver.getType(uri)).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))}catch(_:Exception){}});TextButton(onClick={attachments.remove(item);prefs.edit().putString("attachments",JSONArray().apply{attachments.forEach{put(it)}}.toString()).apply()}){Text("REMOVE",color=Pink)}}}}
  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={drawMode=!drawMode;activeStroke=null},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=if(drawMode)Gold else Pink)){Text(if(drawMode)"DRAW THREAD: ON" else "✎ THREAD")};OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
  }}
