@@ -53,7 +53,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  MaterialTheme(colorScheme=darkColorScheme(primary=Gold,background=Ink,surface=Board,onBackground=Cream,onSurface=Cream)){
  Scaffold(containerColor=Ink,topBar={Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically){
  Box(Modifier.size(46.dp).clip(RoundedCornerShape(15.dp)).background(Gold),contentAlignment=Alignment.Center){Text("J",color=Ink,fontSize=32.sp,fontWeight=FontWeight.Black)}
- Spacer(Modifier.width(10.dp));Column(Modifier.weight(1f)){Text("JBOARD",color=Cream,fontSize=20.sp,fontWeight=FontWeight.Black,letterSpacing=1.5.sp);Text("Your ideas, connected.",color=Pink,fontSize=11.sp)}
+ Spacer(Modifier.width(10.dp));Column(Modifier.weight(1f)){Text("JBOARD",color=Cream,fontSize=20.sp,fontWeight=FontWeight.Black,letterSpacing=1.5.sp);Text("Your ideas, connected.",color=Pink,fontSize=11.sp,letterSpacing=0.5.sp)}
  TextButton(onClick={historyOpen=true}){Text("HISTORY",color=Pink,fontSize=10.sp)}
  }},floatingActionButton={FloatingActionButton(onClick={editing=-2;draft="";selected=-1},containerColor=Gold,contentColor=Ink){Text("+",fontSize=28.sp)}}){padding->
  Column(Modifier.fillMaxSize().background(Ink).padding(padding).padding(horizontal=14.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
@@ -68,8 +68,8 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Row(Modifier.fillMaxWidth().padding(start=8.dp,end=3.dp,top=4.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),fontSize=9.sp);Spacer(Modifier.weight(1f));TextButton(onClick={editing=n.id;draft=n.text;selected=n.id},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.removeAll{it.id==n.id};history.add("Deleted note");dirty=true},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
  Text(n.text,Modifier.padding(9.dp),color=Ink,fontSize=13.sp,maxLines=7)
  }}
- Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.18f),fontSize=70.sp,fontWeight=FontWeight.Black)
- Text("🦋",Modifier.align(Alignment.BottomStart).padding(15.dp),color=Pink.copy(alpha=.45f),fontSize=28.sp)
+ Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.12f),fontSize=96.sp,fontWeight=FontWeight.Black)
+ Text("🦋",Modifier.align(Alignment.BottomStart).padding(18.dp),color=Pink.copy(alpha=.65f),fontSize=34.sp)
  }
  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
