@@ -49,11 +49,14 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var dirty by remember{mutableStateOf(false)}
  var historyOpen by remember{mutableStateOf(false)}
  var search by remember{mutableStateOf("")}
+ var linkMode by remember{mutableStateOf(false)}
+ var linkStart by remember{mutableIntStateOf(-1)}
+ val links=remember{mutableStateListOf<Pair<Int,Int>>()}
  var section by remember{mutableStateOf("Home")}
  val history=remember{mutableStateListOf<String>()}
  fun recordActivity(message:String){history.add(message);while(history.size>100)history.removeAt(0);prefs.edit().putString("history",JSONArray().apply{history.forEach{put(it)}}.toString()).apply()}
- LaunchedEffect(Unit){try{val arr=JSONArray(prefs.getString("notes","[]"));for(i in 0 until arr.length()){val n=arr.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.optInt("x",20),n.optInt("y",20),n.optLong("color",0xFFFFE27A)))};nextId=(notes.maxOfOrNull{it.id}?:0)+1}catch(_:Exception){};try{val h=JSONArray(prefs.getString("history","[]"));for(i in 0 until h.length())history.add(h.getString(i))}catch(_:Exception){}}
- fun save(){val a=JSONArray();notes.forEach{a.put(JSONObject().put("id",it.id).put("text",it.text).put("x",it.x).put("y",it.y).put("color",it.color))};prefs.edit().putString("name",boardName).putString("notes",a.toString()).apply();recordActivity("Saved board");dirty=false}
+ LaunchedEffect(Unit){try{val arr=JSONArray(prefs.getString("notes","[]"));for(i in 0 until arr.length()){val n=arr.getJSONObject(i);notes.add(Note(n.getInt("id"),n.getString("text"),n.optInt("x",20),n.optInt("y",20),n.optLong("color",0xFFFFE27A)))};nextId=(notes.maxOfOrNull{it.id}?:0)+1}catch(_:Exception){};try{val h=JSONArray(prefs.getString("history","[]"));for(i in 0 until h.length())history.add(h.getString(i))}catch(_:Exception){};try{val l=JSONArray(prefs.getString("links","[]"));for(i in 0 until l.length()){val p=l.getJSONObject(i);links.add(p.getInt("a") to p.getInt("b"))}}catch(_:Exception){}}
+ fun save(){val a=JSONArray();notes.forEach{a.put(JSONObject().put("id",it.id).put("text",it.text).put("x",it.x).put("y",it.y).put("color",it.color))};prefs.edit().putString("name",boardName).putString("notes",a.toString()).putString("links",JSONArray().apply{links.forEach{put(JSONObject().put("a",it.first).put("b",it.second))}}.toString()).apply();recordActivity("Saved board");dirty=false}
  MaterialTheme(colorScheme=darkColorScheme(primary=Gold,background=Ink,surface=Board,onBackground=Cream,onSurface=Cream)){
  Scaffold(containerColor=Ink,topBar={Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically){
  Box(Modifier.size(46.dp).clip(RoundedCornerShape(15.dp)).background(Gold),contentAlignment=Alignment.Center){Text("J",color=Ink,fontSize=32.sp,fontWeight=FontWeight.Black)}
@@ -71,22 +74,22 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
  drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
  val visible=notes.filter{it.text.contains(search,ignoreCase=true)}
- visible.zipWithNext().forEach{(a,b)->
+ links.forEach{pair->val a=notes.firstOrNull{it.id==pair.first};val b=notes.firstOrNull{it.id==pair.second};if(a!=null&&b!=null&&a.text.contains(search,true)&&b.text.contains(search,true)){
    val start=Offset(a.x.dp.toPx()+70.dp.toPx(),a.y.dp.toPx()+40.dp.toPx())
    val end=Offset(b.x.dp.toPx()+70.dp.toPx(),b.y.dp.toPx()+40.dp.toPx())
    drawLine(NeonPink.copy(alpha=.85f),start,end,strokeWidth=1.8.dp.toPx())
    drawCircle(Pink,radius=3.dp.toPx(),center=start);drawCircle(Pink,radius=3.dp.toPx(),center=end)
- }
+ }}
 }
  if(notes.isEmpty()) Text("YOUR BOARD STARTS HERE\n\nTap + to create your first note",Modifier.align(Alignment.Center),color=Color.LightGray,fontSize=15.sp,textAlign=androidx.compose.ui.text.style.TextAlign.Center) 
  notes.filter{it.text.contains(search,ignoreCase=true)}.forEach{n->Column(Modifier.offset{IntOffset(n.x,n.y)}.width(140.dp).clip(RoundedCornerShape(12.dp)).background(Color(n.color)).pointerInput(n.id){detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();val dx=drag.x.roundToInt();val dy=drag.y.roundToInt();notes.replaceAll{q->if(q.id==n.id)q.copy(x=(q.x+dx).coerceIn(0,(maxX-145).coerceAtLeast(0)),y=(q.y+dy).coerceIn(0,(maxY-100).coerceAtLeast(0)))else q};dirty=true})}){
- Row(Modifier.fillMaxWidth().padding(start=8.dp,end=3.dp,top=4.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),fontSize=9.sp);Spacer(Modifier.weight(1f));TextButton(onClick={editing=n.id;draft=n.text;selected=n.id},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.removeAll{it.id==n.id};recordActivity("Deleted note");dirty=true},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
+ Row(Modifier.fillMaxWidth().padding(start=8.dp,end=3.dp,top=4.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),fontSize=9.sp);Spacer(Modifier.weight(1f));TextButton(onClick={if(linkMode){if(linkStart==-1){linkStart=n.id;recordActivity("Started note link")}else if(linkStart!=n.id){val pair=linkStart to n.id;if(!links.contains(pair)&&!links.contains(n.id to linkStart)){links.add(pair);recordActivity("Connected notes $linkStart and ${n.id}")};linkStart=-1;linkMode=false;dirty=true}}else{selected=n.id}},contentPadding=PaddingValues(0.dp)){Text("↔",color=Ink)};TextButton(onClick={editing=n.id;draft=n.text;selected=n.id},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.removeAll{it.id==n.id};recordActivity("Deleted note");dirty=true},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
  Text(n.text,Modifier.padding(9.dp),color=Ink,fontSize=13.sp,maxLines=7)
  }}
  Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.12f),fontSize=96.sp,fontWeight=FontWeight.Black)
  Text("🦋",Modifier.align(Alignment.CenterEnd).padding(end=8.dp),color=Pink.copy(alpha=.18f),fontSize=150.sp)
  }
- Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
+ Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={linkMode=!linkMode;linkStart=-1},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=if(linkMode)Gold else Pink)){Text(if(linkMode)"LINK: PICK NOTES" else "↔ LINK")};OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
  }}
  if(editing!=-1)AlertDialog(onDismissRequest={editing=-1},containerColor=Board,title={Text(if(editing==-2)"New sticky note" else "Edit note",color=Gold)},text={BasicTextField(value=draft,onValueChange={draft=it},modifier=Modifier.fillMaxWidth().heightIn(min=100.dp).background(Color(0xFF333333),RoundedCornerShape(8.dp)).padding(12.dp),textStyle=MaterialTheme.typography.bodyLarge.copy(color=Cream),decorationBox={inner->Box{if(draft.isEmpty())Text("Write your thought…",color=Color.Gray);inner()}})},confirmButton={TextButton(onClick={if(editing==-2){notes.add(Note(nextId,draft,18+(notes.size%2)*150,25+(notes.size%4)*100,when(notes.size%3){0->0xFFFFE27A;1->0xFFFFA8C9;else->0xFFB8E3D0}));recordActivity("Added note");nextId++}else notes.replaceAll{if(it.id==editing)it.copy(text=draft)else it};editing=-1;dirty=true}){Text("DONE",color=Gold)}},dismissButton={TextButton(onClick={editing=-1}){Text("CANCEL",color=Pink)}})
