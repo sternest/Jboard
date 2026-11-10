@@ -54,6 +54,8 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var historyOpen by remember{mutableStateOf(false)}
  var search by remember{mutableStateOf("")}
  var drawMode by remember{mutableStateOf(false)}
+ var boardPanX by remember{mutableIntStateOf(0)}
+ var boardPanY by remember{mutableIntStateOf(0)}
  val strokes=remember{mutableStateListOf<MutableList<Offset>>()}
  var activeStroke by remember{mutableStateOf<List<Offset>?>(null)}
  var section by remember{mutableStateOf("Home")}
@@ -74,7 +76,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Row(verticalAlignment=Alignment.CenterVertically){Text("IDEA BOARD",color=Gold,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Spacer(Modifier.weight(1f));Text("${notes.count{it.text.contains(search,ignoreCase=true)}} MATCHING NOTES",color=Color.LightGray,fontSize=10.sp)}
  BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF281A12)).padding(2.dp).background(Color(0xFF090707),RoundedCornerShape(21.dp))){
  val maxX=maxWidth.value.toInt();val maxY=maxHeight.value.toInt()
- androidx.compose.foundation.Canvas(Modifier.fillMaxSize().pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null})}){
+ androidx.compose.foundation.Canvas(Modifier.fillMaxSize().offset{IntOffset(boardPanX,boardPanY)}.pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null}) else detectDragGestures(onDrag={change,drag->change.consume();boardPanX+=drag.x.roundToInt();boardPanY+=drag.y.roundToInt()})}){
  val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
  drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
  // Large, low-contrast Jboard watermark, painted behind all board content and user threads.
@@ -91,7 +93,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  activeStroke?.let{stroke->if(stroke.size>1){val path=Path().apply{moveTo(stroke.first().x*size.width,stroke.first().y*size.height);stroke.drop(1).forEach{lineTo(it.x*size.width,it.y*size.height)}};drawPath(path,Pink,style=Stroke(width=3.dp.toPx()))}}
  }
  if(notes.isEmpty()) Text("YOUR BOARD STARTS HERE\n\nTap + to create your first note",Modifier.align(Alignment.Center),color=Color.LightGray,fontSize=15.sp,textAlign=androidx.compose.ui.text.style.TextAlign.Center) 
- notes.filter{it.text.contains(search,ignoreCase=true)}.forEach{n->Column(Modifier.offset{IntOffset(n.x,n.y)}.width(140.dp).clip(RoundedCornerShape(12.dp)).background(Color(n.color)).pointerInput(n.id,drawMode){if(!drawMode)detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();val dx=drag.x.roundToInt();val dy=drag.y.roundToInt();notes.replaceAll{q->if(q.id==n.id)q.copy(x=(q.x+dx).coerceIn(0,(maxX-145).coerceAtLeast(0)),y=(q.y+dy).coerceIn(0,(maxY-100).coerceAtLeast(0)))else q};dirty=true})}){
+ notes.filter{it.text.contains(search,ignoreCase=true)}.forEach{n->Column(Modifier.offset{IntOffset(n.x+boardPanX,n.y+boardPanY)}.width(140.dp).clip(RoundedCornerShape(12.dp)).background(Color(n.color)).pointerInput(n.id,drawMode){if(!drawMode)detectDragGestures(onDragStart={selected=n.id},onDrag={change,drag->change.consume();val dx=drag.x.roundToInt();val dy=drag.y.roundToInt();notes.replaceAll{q->if(q.id==n.id)q.copy(x=(q.x+dx).coerceIn(0,(maxX-145).coerceAtLeast(0)),y=(q.y+dy).coerceIn(0,(maxY-100).coerceAtLeast(0)))else q};dirty=true})}){
  Row(Modifier.fillMaxWidth().padding(start=8.dp,end=3.dp,top=4.dp),verticalAlignment=Alignment.CenterVertically){Text("NOTE ${n.id}",color=Ink.copy(alpha=.55f),fontSize=9.sp);Spacer(Modifier.weight(1f));TextButton(onClick={editing=n.id;draft=n.text;selected=n.id},contentPadding=PaddingValues(0.dp)){Text("✎",color=Ink)};TextButton(onClick={notes.removeAll{it.id==n.id};recordActivity("Deleted note");dirty=true},contentPadding=PaddingValues(0.dp)){Text("×",color=Ink)}}
  Text(n.text,Modifier.padding(9.dp).heightIn(max=220.dp).verticalScroll(rememberScrollState()),color=Ink,fontSize=13.sp)
  }}
