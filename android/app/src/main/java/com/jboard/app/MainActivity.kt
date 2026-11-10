@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -82,9 +83,10 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  OutlinedTextField(value=search,onValueChange={search=it},modifier=Modifier.fillMaxWidth(),singleLine=true,placeholder={Text("Search your board…")},leadingIcon={Text("⌕",color=Gold)},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=Cream,unfocusedTextColor=Cream,focusedBorderColor=Gold,unfocusedBorderColor=Color.DarkGray))
  OutlinedTextField(value=boardName,onValueChange={boardName=it;dirty=true},label={Text("Board name")},singleLine=true,modifier=Modifier.fillMaxWidth(),colors=OutlinedTextFieldDefaults.colors(focusedTextColor=Cream,unfocusedTextColor=Cream,focusedBorderColor=Gold,unfocusedBorderColor=Color.DarkGray,focusedLabelColor=Gold,unfocusedLabelColor=Color.LightGray))
  Row(verticalAlignment=Alignment.CenterVertically){Text("IDEA BOARD",color=Gold,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Spacer(Modifier.weight(1f));Text("${notes.count{it.text.contains(search,ignoreCase=true)}} MATCHING NOTES",color=Color.LightGray,fontSize=10.sp)}
- BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF281A12)).padding(2.dp).background(Color(0xFF090707),RoundedCornerShape(21.dp))){
+ Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF281A12)).padding(2.dp).background(Color(0xFF090707),RoundedCornerShape(21.dp))){
+ BoxWithConstraints(Modifier.horizontalScroll(rememberScrollState()).verticalScroll(rememberScrollState()).size(1600.dp,1200.dp)){
  val maxX=maxWidth.value.toInt();val maxY=maxHeight.value.toInt()
- androidx.compose.foundation.Canvas(Modifier.fillMaxSize().offset{IntOffset(boardPanX,boardPanY)}.pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null}) else detectDragGestures(onDrag={change,drag->change.consume();boardPanX+=drag.x.roundToInt();boardPanY+=drag.y.roundToInt()})}){
+ androidx.compose.foundation.Canvas(Modifier.fillMaxSize().offset{IntOffset(boardPanX,boardPanY)}.pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null})}){
  val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
  drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
  // Large, low-contrast Jboard watermark, painted behind all board content and user threads.
@@ -108,6 +110,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Text("J",Modifier.align(Alignment.BottomEnd).padding(15.dp),color=Gold.copy(alpha=.12f),fontSize=96.sp,fontWeight=FontWeight.Black)
  Text("🦋",Modifier.align(Alignment.CenterEnd).padding(end=8.dp),color=Pink.copy(alpha=.18f),fontSize=150.sp)
  }
+  }
  if(section=="Files"){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){Button(onClick={filePicker.launch(arrayOf("*/*"))},colors=ButtonDefaults.buttonColors(containerColor=Gold,contentColor=Ink)){Text("＋ UPLOAD FILE")};Text("${attachments.size} attachments",color=Cream,modifier=Modifier.align(Alignment.CenterVertically))};attachments.forEach{item->Row(Modifier.fillMaxWidth().padding(vertical=4.dp),verticalAlignment=Alignment.CenterVertically){Text(item.substringBefore("|"),color=Cream,modifier=Modifier.weight(1f));TextButton(onClick={attachments.remove(item);prefs.edit().putString("attachments",JSONArray().apply{attachments.forEach{put(it)}}.toString()).apply()}){Text("REMOVE",color=Pink)}}}}
  Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){OutlinedButton(onClick={drawMode=!drawMode;activeStroke=null},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=if(drawMode)Gold else Pink)){Text(if(drawMode)"DRAW THREAD: ON" else "✎ THREAD")};OutlinedButton(onClick={draft="";editing=-2},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Pink)){Text("+ NOTE")};OutlinedButton(onClick={historyOpen=true},modifier=Modifier.weight(1f),colors=ButtonDefaults.outlinedButtonColors(contentColor=Gold)){Text("ACTIVITY")};Button(onClick={save()},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=Pink,contentColor=Ink)){Text("SAVE",fontWeight=FontWeight.Bold)}}
  Text(if(dirty)"● UNSAVED CHANGES" else "✓ SAVED LOCALLY • PROTOTYPE",color=if(dirty)Gold else Color.Gray,fontSize=9.sp,letterSpacing=1.sp)
