@@ -52,7 +52,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var search by remember{mutableStateOf("")}
  var drawMode by remember{mutableStateOf(false)}
  val strokes=remember{mutableStateListOf<MutableList<Offset>>()}
- var activeStroke by remember{mutableStateOf<MutableList<Offset>?>(null)}
+ var activeStroke by remember{mutableStateOf<List<Offset>?>(null)}
  var section by remember{mutableStateOf("Home")}
  val history=remember{mutableStateListOf<String>()}
  fun recordActivity(message:String){history.add(message);while(history.size>100)history.removeAt(0);prefs.edit().putString("history",JSONArray().apply{history.forEach{put(it)}}.toString()).apply()}
@@ -71,7 +71,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Row(verticalAlignment=Alignment.CenterVertically){Text("IDEA BOARD",color=Gold,fontWeight=FontWeight.Bold,letterSpacing=2.sp);Spacer(Modifier.weight(1f));Text("${notes.count{it.text.contains(search,ignoreCase=true)}} MATCHING NOTES",color=Color.LightGray,fontSize=10.sp)}
  BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color(0xFF281A12)).padding(2.dp).background(Color(0xFF090707),RoundedCornerShape(21.dp))){
  val maxX=maxWidth.value.toInt();val maxY=maxHeight.value.toInt()
- androidx.compose.foundation.Canvas(Modifier.fillMaxSize().pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=mutableListOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke?.add(Offset(change.position.x/size.width,change.position.y/size.height))},onDragEnd={activeStroke?.let{strokes.add(it);recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null})}){
+ androidx.compose.foundation.Canvas(Modifier.fillMaxSize().pointerInput(drawMode){if(drawMode)detectDragGestures(onDragStart={p->activeStroke=listOf(Offset(p.x/size.width,p.y/size.height))},onDrag={change,_->change.consume();activeStroke=activeStroke.orEmpty()+Offset(change.position.x/size.width,change.position.y/size.height)},onDragEnd={activeStroke?.let{strokes.add(it.toMutableList());recordActivity("Drew thread");dirty=true};activeStroke=null},onDragCancel={activeStroke=null})}){
  val step=30.dp.toPx();var y=step;while(y<size.height){var x=step;while(x<size.width){drawCircle(Color(0xFF3A2A1B),1f,Offset(x,y));x+=step};y+=step}
  drawRoundRect(Color(0x66FFD629),style=Stroke(1.5.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(20.dp.toPx()))
  val visible=notes.filter{it.text.contains(search,ignoreCase=true)}
